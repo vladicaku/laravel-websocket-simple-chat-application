@@ -13,14 +13,14 @@ class PrivateMessageEvent implements ShouldBroadcast {
 
 	use InteractsWithSockets, SerializesModels;
 
-	public $message;
+	public $data;
 
-	public function __construct($message) {
-		$this->message = $message;
+	public function __construct($data) {
+		$this->data = $data;
 	}
 
 
 	public function broadcastOn() {
-		return new PrivateChannel('user-' . $this->message->to);
+		return new PrivateChannel('user-' . $this->data->to);
 	}
 }

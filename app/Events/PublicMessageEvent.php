@@ -17,11 +17,10 @@ class PublicMessageEvent implements ShouldBroadcast {
 
 	public function __construct($data) {
 		$this->data = $data;
-//		dump($this->message);
 	}
 
 
 	public function broadcastOn() {
-		return new Channel("public");
+		return new PresenceChannel("public");
 	}
 }

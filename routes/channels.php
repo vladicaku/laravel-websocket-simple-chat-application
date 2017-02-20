@@ -32,3 +32,7 @@ Broadcast::channel('public', function ($user) {
 		'avatar' => Request::session()->get("avatar"),
 	];
 });
+
+Broadcast::channel('user-{userId}', function ($user, $userId) {
+    return $user->id === $userId;
+});

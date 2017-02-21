@@ -33,6 +33,14 @@ Broadcast::channel('public', function ($user) {
 	];
 });
 
-Broadcast::channel('user-{userId}', function ($user, $userId) {
-    return $user->id === $userId;
+Broadcast::channel('user-{id}', function ($user, $id) {
+	return $user->id == $id;
 });
+
+//Broadcast::channel('user-{userEmail}', function ($user, $userEmail) {
+////	if (strcmp($user->email, $userEmail) == 0) {
+////		return true;
+////	}
+////	return false;
+//	//return (strcmp($user->email, $userEmail) == 0);
+//});

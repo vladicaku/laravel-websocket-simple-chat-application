@@ -7,25 +7,30 @@ $(document).ready(function () {
 	var chatDiv = $("#messages");
 	var usersDiv = $("#active-users");
 
-	var messageReceived = function (data) {
-		let element = `<div class="answer left">
+	var messageReceived = function (data, isPrivate = false) {
+		let clazz = isPrivate == true ? 'private-message' : '';
+		let from = (isPrivate == true ? 'Private message from ' : '') + data.user.name;
+
+		let element = `<div class="answer left ${clazz}">
 					<div class="avatar">
 						<img src="${avatarUrl}/${data.user.avatar}.png" alt="User name">
 						<!--<div class="status offline"></div>-->
 					</div>
-					<div class="name">${data.user.name}</div>
+					<div class="name">${from}</div>
 					<div class="text">
 						${data.message}
 					</div>
 					<div class="time">${data.time}</div>
 				</div>`;
+
 		$(element).appendTo(chatDiv);
 		chatDiv.scrollTop(chatDiv.prop("scrollHeight"));
 	};
 
 	var sendMessage = function (message) {
 		let currentDate = new Date();
-		let currentTime = currentDate.getHours() + ":" + currentDate.getMinutes();
+		let currentTime = ('0' + currentDate.getHours()).slice(-2) + ":" + ('0' + currentDate.getMinutes()).slice(-2);
+
 		let element = `<div class="answer right">
 					<div class="avatar">
 						<img src="${avatarUrl}/${me.avatar}.png" alt="User name">
@@ -39,7 +44,7 @@ $(document).ready(function () {
 				</div>`;
 
 		$.ajax({
-			url: "/chat/send-public-message",
+			url: "/chat/send-message",
 			type: "get",
 			data: {
 				'message': message
@@ -72,19 +77,17 @@ $(document).ready(function () {
 		$(element).appendTo(usersDiv);
 	};
 
-	/* Setup Echo and join canals */
+	/* Setup Echo */
 	window.Echo = new Echo({
 		broadcaster: 'pusher',
 		key: '6d65a89a5dfca1979c22',
 		cluster: 'eu'
 	});
 
-	window.Echo.channel('public').listen('PublicMessageEvent', (e) => {
-		messageReceived(e.data);
-	});
-
+	/* Join public channel */
 	window.Echo.join('public')
 		.here((users) => {
+			$('.user').remove();
 			users.forEach( u => joining(u));
 		})
 		.joining((user) => {
@@ -92,7 +95,14 @@ $(document).ready(function () {
 		})
 		.leaving((user) => {
 			leaving(user);
-		});
+		}).listen('PublicMessageEvent', (e) => {
+		messageReceived(e.data);
+	});
+
+	/* Join my private channel */
+	window.Echo.private('user-' + me.id).listen('PrivateMessageEvent', (e) => {
+		messageReceived(e.data, true);
+	});
 
 	/* Button click and input on Enter key press */
 	$("#send-button").click(function () {

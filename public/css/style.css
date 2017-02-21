@@ -152,7 +152,6 @@
 	text-align: left;
 	float: left;
 }
-
 /* ---------------------------------------------------------------- */
 #messages .avatar {
 	width: 40px;
@@ -236,4 +235,9 @@
 	padding-right: 12px;
 	color: #333333;
 }
-
+/* ---------------------------------------------------------------- */
+.answer.private-message .text{
+	/*background-color: #5580d8 !important;*/
+	background-color: #31b8ce !important;
+	color: #FFFFFF !important;
+}

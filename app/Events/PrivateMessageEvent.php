@@ -21,6 +21,6 @@ class PrivateMessageEvent implements ShouldBroadcast {
 
 
 	public function broadcastOn() {
-		return new PrivateChannel('user-' . $this->data->to);
+		return new PrivateChannel('user-' . $this->data['to']);
 	}
 }

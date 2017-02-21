@@ -4962,18 +4962,25 @@ $(document).ready(function () {
 	var usersDiv = $("#active-users");
 
 	var messageReceived = function messageReceived(data) {
-		var element = "<div class=\"answer left\">\n\t\t\t\t\t<div class=\"avatar\">\n\t\t\t\t\t\t<img src=\"" + avatarUrl + "/" + data.user.avatar + ".png\" alt=\"User name\">\n\t\t\t\t\t\t<!--<div class=\"status offline\"></div>-->\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"name\">" + data.user.name + "</div>\n\t\t\t\t\t<div class=\"text\">\n\t\t\t\t\t\t" + data.message + "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"time\">" + data.time + "</div>\n\t\t\t\t</div>";
+		var isPrivate = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+		var clazz = isPrivate == true ? 'private-message' : '';
+		var from = (isPrivate == true ? 'Private message from ' : '') + data.user.name;
+
+		var element = "<div class=\"answer left " + clazz + "\">\n\t\t\t\t\t<div class=\"avatar\">\n\t\t\t\t\t\t<img src=\"" + avatarUrl + "/" + data.user.avatar + ".png\" alt=\"User name\">\n\t\t\t\t\t\t<!--<div class=\"status offline\"></div>-->\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"name\">" + from + "</div>\n\t\t\t\t\t<div class=\"text\">\n\t\t\t\t\t\t" + data.message + "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"time\">" + data.time + "</div>\n\t\t\t\t</div>";
+
 		$(element).appendTo(chatDiv);
 		chatDiv.scrollTop(chatDiv.prop("scrollHeight"));
 	};
 
 	var sendMessage = function sendMessage(message) {
 		var currentDate = new Date();
-		var currentTime = currentDate.getHours() + ":" + currentDate.getMinutes();
+		var currentTime = ('0' + currentDate.getHours()).slice(-2) + ":" + ('0' + currentDate.getMinutes()).slice(-2);
+
 		var element = "<div class=\"answer right\">\n\t\t\t\t\t<div class=\"avatar\">\n\t\t\t\t\t\t<img src=\"" + avatarUrl + "/" + me.avatar + ".png\" alt=\"User name\">\n\t\t\t\t\t\t<!--<div class=\"status offline\"></div>-->\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"name\">" + me.name + "</div>\n\t\t\t\t\t<div class=\"text\">\n\t\t\t\t\t\t" + message + "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"time\">" + currentTime + "</div>\n\t\t\t\t</div>";
 
 		$.ajax({
-			url: "/chat/send-public-message",
+			url: "/chat/send-message",
 			type: "get",
 			data: {
 				'message': message
@@ -4989,8 +4996,6 @@ $(document).ready(function () {
 		});
 	};
 
-	var here = function here(users) {};
-
 	var leaving = function leaving(user) {
 		$("#user-" + user.id).remove();
 	};
@@ -5000,17 +5005,16 @@ $(document).ready(function () {
 		$(element).appendTo(usersDiv);
 	};
 
+	/* Setup Echo */
 	window.Echo = new _laravelEcho2.default({
 		broadcaster: 'pusher',
 		key: '6d65a89a5dfca1979c22',
 		cluster: 'eu'
 	});
 
-	window.Echo.channel('public').listen('PublicMessageEvent', function (e) {
-		messageReceived(e.data);
-	});
-
+	/* Join public channel */
 	window.Echo.join('public').here(function (users) {
+		$('.user').remove();
 		users.forEach(function (u) {
 			return joining(u);
 		});
@@ -5018,8 +5022,16 @@ $(document).ready(function () {
 		joining(user);
 	}).leaving(function (user) {
 		leaving(user);
+	}).listen('PublicMessageEvent', function (e) {
+		messageReceived(e.data);
 	});
 
+	/* Join my private channel */
+	window.Echo.private('user-' + me.id).listen('PrivateMessageEvent', function (e) {
+		messageReceived(e.data, true);
+	});
+
+	/* Button click and input on Enter key press */
 	$("#send-button").click(function () {
 		sendMessage($("#message-input").val());
 		$("#message-input").val('');
